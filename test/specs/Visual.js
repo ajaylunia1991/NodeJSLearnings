@@ -1,47 +1,67 @@
+console.timeLog('Visual File Execution');
+
+const {
+    Eyes,
+    Target,
+    ClassicRunner,
+    Configuration,
+    BatchInfo
+} = require('@applitools/eyes-webdriverio');
+
 // Initialize the eyes SDK
-const { Eyes, Target } = require('@applitools/eyes.webdriverio')
-
-const eyes = new Eyes()
-
-// Set your private API key.
-eyes.setApiKey(process.env.APPLITOOLS_API_KEY)
 
 // Allows you to gather your tests into separate groupings within the same file
 describe('Applitools Visual Test', function () {
 
-// represents a single test case
+    // represents a single test case
     it('Page should look ok', async function () {
 
-        // Navigate the browser to the "hello world example" web-site.
-        browser.url('https://applitools.com/helloworld?diff2')
-        try {
+            // Initialize the eyes SDK and set your private API key.
+            const eyes = new Eyes(new ClassicRunner());
 
-            // Set browser to fullscreen
-            browser.windowHandleFullscreen();
+            try {
+                const batchInfo = new BatchInfo();
+                batchInfo.setSequenceName('alpha sequence');
 
-            // Get the current size of the screen
-            const viewportSize = browser.getViewportSize()
+                const configuration = new Configuration();
+                configuration.setBatch(batchInfo);
+                configuration.setAppName('Eyes Examples');
+                configuration.setTestName('My first Javascript test!');
+                // eyes.setApiKey('Your API Key');
+                configuration.setApiKey('YgJXm2puxrK0lI9VyvoIykU3dqVovOIPWci1WMk0B8E110');
+                eyes.setConfiguration(configuration);
 
-            // Start the test and set the browser's viewport size to 
-            await eyes.open(browser, 'Hello World Example', 'New Visual UI Test', viewportSize);
+                const driver = await eyes.open(browser);
 
-            // Visual checkpoint #1.
-            await eyes.check('Main Page', Target.window());
+                // Navigate the browser to the "hello world!" web-site.
+                await driver.url('https://applitools.com/helloworld');
 
-            // Click the "Click me!" button.
-            await browser.click('button');
+                // Visual checkpoint #1.
+                await eyes.check('Main Page', Target.window().fully());
 
-            // Visual checkpoint #2.
-            await eyes.check('Click!', Target.window());
+                // Click the "Click me!" button.
+                const b = await browser.$('button');
+                await b.click();
 
-            // End the test.
-            await eyes.close();
+                // Visual checkpoint #2.
+                await eyes.check('Click!', Target.window().fully());
 
-        } finally {
+                // End the test.
+                // const results = await eyes.close(); // will return only first TestResults, but as we have two browsers, we need more result
+                await eyes.close(false);
+                const results = await eyes.getRunner().getAllTestResults(false);
+                console.log(results);
 
-            // If the test was aborted before eyes.close was called ends the test as aborted.
-            await eyes.abortIfNotClosed();
+            } finally {
 
-        }
-    })
+                // Close the browser.
+                await browser.deleteSession();
+
+                // If the test was aborted before eyes.close was called ends the test as aborted.
+                await eyes.abort();
+
+            }
+
+
+        })
 })
